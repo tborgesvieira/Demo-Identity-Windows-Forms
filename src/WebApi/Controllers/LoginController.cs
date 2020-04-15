@@ -15,7 +15,7 @@ namespace WebApi.Controllers
     [ApiController]
     [AllowAnonymous]
     [Route("api/[controller]")]
-    public class LoginController : Controller
+    public class LoginController : BaseController
     {
         private IConfiguration _config;
 
@@ -27,19 +27,36 @@ namespace WebApi.Controllers
         [HttpGet]
         public IActionResult Get()
         {
-            return Ok("ok");
+            return Ok("erro");
         }
         
         [HttpPost]
-        public IActionResult Login([FromBody]UserModel login)
+        public IActionResult Login(UserModel login)
         {
             IActionResult response = Unauthorized();
+
+            if (!ModelState.IsValid)
+            {
+                response = BadRequest(
+                    new
+                    {
+                        success = false,
+                        erros = NotificarErros()
+                    });
+
+                return response;
+            }
+
             var user = AuthenticateUser(login);
 
             if (user != null)
             {
                 var tokenString = GenerateJSONWebToken(user);
-                response = Ok(new { token = tokenString });
+                response = Ok(new { success = true, token = tokenString });
+            }
+            else
+            {
+                response = BadRequest(login);
             }
 
             return response;
